@@ -1,0 +1,176 @@
+package com.example.following_subscriptions
+
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.excludeFromSystemGesture
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.contentcapture.ContentCaptureManager.Companion.isEnabled
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.following_subscriptions.ui.theme.CreamWhite
+import com.example.following_subscriptions.ui.theme.DeepBlue
+import com.example.following_subscriptions.ui.theme.DuricFont
+import com.example.following_subscriptions.ui.theme.LletreFont
+import com.google.firebase.auth.FirebaseAuth
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun  RegistrationScreen(
+    onRegistrationClick: () ->Unit,
+    onBackToLogin: ()-> Unit
+) {
+    var email by remember{mutableStateOf("")}
+    var password by remember{mutableStateOf("")}
+    var errorMes by remember { mutableStateOf<String?>(null) }
+    val fs = FirebaseAuth.getInstance()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(DeepBlue)
+            .padding(horizontal = 30.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ){
+        //Заголовок
+        Text(
+            text = "Регистрация",
+            color = CreamWhite,
+            fontSize = 40.sp,
+            fontFamily = LletreFont,
+            fontWeight = FontWeight.Normal
+        )
+        Spacer(modifier= Modifier.height(8.dp))
+
+        Text(
+            text = "Регистрация аккаунта",
+            color = CreamWhite,
+            fontStyle = FontStyle.Italic,
+            fontSize=16.sp
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Введите Email и пароль",
+            fontStyle = FontStyle.Italic,
+            color = CreamWhite,
+            fontSize=16.sp
+        )
+
+        Spacer(modifier = Modifier.height(40.dp))
+
+        //Поле Логина
+        TextField(
+            value = email,
+            onValueChange = {
+                email = it
+                errorMes=null },
+            label = { Text("Email",
+                color = CreamWhite.copy(alpha = 0.6f),
+                fontFamily = DuricFont
+            )},
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                focusedIndicatorColor = CreamWhite,
+                unfocusedIndicatorColor = CreamWhite.copy(alpha = 0.5f),
+                focusedTextColor = CreamWhite,
+                unfocusedTextColor = CreamWhite
+            )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextField(
+            value = password,
+            onValueChange = {
+                password= it
+                errorMes = null            },
+            label = {Text("Пароль",
+                color = CreamWhite.copy(alpha = 0.6f),
+                fontFamily = DuricFont
+            )},
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                focusedIndicatorColor = CreamWhite,
+                unfocusedIndicatorColor = CreamWhite.copy(alpha = 0.5f),
+                focusedTextColor = CreamWhite,
+                unfocusedTextColor = CreamWhite
+            )
+        )
+        if (errorMes != null){
+            Spacer (modifier = Modifier.height(10.dp))
+            Text(
+                text = errorMes!!,
+                color =Color.Red,
+                fontSize = 14.sp,
+                fontFamily = DuricFont,
+                modifier = Modifier.padding(horizontal = 10.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(40.dp))
+
+        //Кнопка регистрации
+        Button(
+            onClick = {
+                if (email.isNotEmpty() && password.isNotEmpty()) {
+                    fs.createUserWithEmailAndPassword(email.trim(), password.trim())
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                onRegistrationClick()
+                            } else {
+                                errorMes = task.exception?.localizedMessage
+                            }
+                        }
+                }else{
+                    errorMes = "Заполните все поля"
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(55.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = CreamWhite),
+            shape = MaterialTheme.shapes.medium
+        ){
+            Text(
+                text = "Зарегистрироваться",
+                color = DeepBlue,
+                fontSize = 23.sp,
+                fontFamily = LletreFont
+            )
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+
+        TextButton(onClick=onBackToLogin){
+            Text(
+                text="Если аккаунт существует: Войдите",
+                color = CreamWhite.copy(alpha=0.8f),
+                fontFamily = LletreFont,
+                fontSize=20.sp
+            )
+        }
+    }
+}
+
+//@Preview(showBackground = true)
+//@Composable
+//fun RegistrationScreenPreview() {
+//    RegistrationScreen(onRegistrationClick = {})
+//}
