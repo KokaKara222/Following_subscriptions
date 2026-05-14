@@ -95,6 +95,13 @@ fun SettingScreen(){
                 .fillMaxWidth()
                 .padding(top = 20.dp),
         )
+
+        Icon(
+            painter = painterResource(id = R.drawable.ic_mail),
+            contentDescription = null,
+            tint = CreamWhite,
+            modifier = Modifier.padding(40.dp)
+        )
     }
     Spacer(modifier = Modifier.height(40.dp))
 
