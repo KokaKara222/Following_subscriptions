@@ -5,6 +5,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +30,7 @@ import com.example.following_subscriptions.ui.theme.LletreFont
 import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 
 
@@ -95,31 +101,33 @@ fun SettingScreen(){
                 .fillMaxWidth()
                 .padding(top = 20.dp),
         )
+        Spacer(modifier = Modifier.width(20.dp))
+        SettingItem( icon = Icons.Default.Email, title = "Email", value = userEmail)
+        SettingItem( icon = Icons.Default.Lock, title = "Пароль", value = "**")
 
-        Icon(
-            painter = painterResource(id = R.drawable.ic_mail),
-            contentDescription = null,
-            tint = CreamWhite,
-            modifier = Modifier.padding(40.dp)
-        )
     }
-    Spacer(modifier = Modifier.height(40.dp))
 
 
 
 }
 
 @Composable
-fun SettingSectionTitle(title:String){
-    Text(
-        text = title,
-        color = CreamWhite,
-        fontSize = 20.sp,
-        fontFamily = DuricFont,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(vertical =12.dp)
-    )
+fun SettingItem(icon: ImageVector, title: String, value: String){
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+//            .clickable{ }
+            .padding(vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ){
+        Icon(imageVector = icon, contentDescription = null, tint = CreamWhite, modifier = Modifier.size(28.dp))
+        Spacer(modifier = Modifier.width(16.dp))
+        Text( text = title, color = CreamWhite, fontSize = 18.sp, fontFamily = DuricFont, modifier = Modifier.weight(1f))
+        Text( text = value, color = CreamWhite.copy(alpha = 0.6f), fontSize = 16.sp, fontFamily = DuricFont)
+        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = CreamWhite.copy(alpha = 0.6f))
+    }
 }
+
 
 @androidx.compose.ui.tooling.preview.Preview(showBackground = true)
 @Composable
