@@ -55,8 +55,7 @@ fun MainListScreen(
     Scaffold(containerColor = DeepBlue, bottomBar = {
         SubscriptionBottomBar(
             currentScreen = startScreen, onTabClick = { tab ->
-                val target = if (tab == "subs") "main" else tab
-                onNavigate(target)
+                onNavigate(tab)
             })
     }, floatingActionButton = {
         if (startScreen == "main") {
@@ -210,7 +209,7 @@ fun SubscriptionBottomBar(
 ) {
     val tabs = listOf(
         Triple("stats", "Статистика", R.drawable.ic_stats),
-        Triple("subs", "Подписка", R.drawable.ic_subs),
+        Triple("main", "Подписка", R.drawable.ic_subs),
         Triple("setting", "Настройки", R.drawable.ic_settings)
     )
 
