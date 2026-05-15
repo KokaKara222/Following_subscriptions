@@ -2,7 +2,7 @@ package com.example.following_subscriptions.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-@Entity(tableName = "subcription")
+@Entity(tableName = "subscriptions")
 data class Subscription(
     @PrimaryKey(autoGenerate = true)
     val id: Int=0,

@@ -31,16 +31,10 @@ import com.example.following_subscriptions.ui.theme.DeepBlue
 import com.example.following_subscriptions.ui.theme.DuricFont
 import com.example.following_subscriptions.ui.theme.InactiveGray
 import com.example.following_subscriptions.ui.theme.LletreFont
+import androidx.compose.runtime.collectAsState
+import com.example.following_subscriptions.data.Subscription
+import androidx.compose.ui.graphics.toArgb
 
-data class Subscription(
-    val id: Int,
-    val name: String,
-    val category: String,
-    val date: String,
-    val price: String,
-    val iconRes: Int,
-    val color: Color
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,13 +43,15 @@ fun MainListScreen(
     onNavigate: (String) -> Unit,
     viewModel: MainViewModel = viewModel()
 ) {
+    val subscriptions by viewModel.subscriptions.collectAsState(initial = emptyList())
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    Scaffold(containerColor = DeepBlue, bottomBar = {
+    Scaffold(
+        containerColor = DeepBlue,
+        bottomBar = {
         SubscriptionBottomBar(
-            currentScreen = startScreen, onTabClick = { tab ->
-                onNavigate(tab)
-            })
-    }, floatingActionButton = {
+            currentScreen = startScreen, onTabClick = onNavigate)
+    },
+        floatingActionButton = {
         if (startScreen == "main") {
             FloatingActionButton(
                 onClick = { viewModel.openSheet() },
@@ -73,7 +69,7 @@ fun MainListScreen(
         ) {
             when (startScreen) {
                 "main" -> {
-                    MainListContent(viewModel.subscriptions)
+                    MainListContent(subscriptions)
                 }
 
                 "setting" -> {
@@ -151,7 +147,7 @@ fun SubscriptionItem(sub: Subscription) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = sub.color)
+        colors = CardDefaults.cardColors(containerColor = Color(sub.colorInt))
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
