@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.following_subscriptions.ui.theme.CreamWhite
 import com.example.following_subscriptions.ui.theme.DarkBlue
 import com.example.following_subscriptions.ui.theme.DeepBlue
@@ -44,14 +45,11 @@ data class Subscription(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainListScreen(
-    startScreen: String = "main", onNavigate: (String) -> Unit
+    startScreen: String = "main",
+    onNavigate: (String) -> Unit,
+    viewModel: MainViewModel = viewModel()
 ) {
-    val subscriptions = remember { mutableStateListOf<Subscription>() }
-    var showSheet by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true
-    )
-
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     Scaffold(containerColor = DeepBlue, bottomBar = {
         SubscriptionBottomBar(
             currentScreen = startScreen, onTabClick = { tab ->
@@ -60,7 +58,7 @@ fun MainListScreen(
     }, floatingActionButton = {
         if (startScreen == "main") {
             FloatingActionButton(
-                onClick = { showSheet = true },
+                onClick = { viewModel.openSheet() },
                 containerColor = Color.Black,
                 shape = CircleShape
             ) {
@@ -75,7 +73,7 @@ fun MainListScreen(
         ) {
             when (startScreen) {
                 "main" -> {
-                    MainListContent(subscriptions)
+                    MainListContent(viewModel.subscriptions)
                 }
 
                 "setting" -> {
@@ -92,40 +90,29 @@ fun MainListScreen(
                 }
             }
         }
-    }
-
-    if (showSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showSheet = false },
-            containerColor = DeepBlue,
-            dragHandle = { BottomSheetDefaults.DragHandle(color = CreamWhite) },
-            sheetState = sheetState
-        ) {
-            AddSubscriptionCard(onAddClick = { name, category, price, date, icon, color ->
-                subscriptions.add(
-                    Subscription(
-                        id = subscriptions.size,
-                        name = name,
-                        category = category,
-                        date = date,
-                        price = price,
-                        iconRes = icon,
-                        color = color
-                    )
-                )
-                showSheet = false
-            })
+        if (viewModel.showSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { viewModel.closeSheet() },
+                containerColor = DeepBlue,
+                sheetState = sheetState
+            ) {
+                AddSubscriptionCard(onAddClick = { name, category, price, date, icon, color ->
+                    viewModel.addSubscription(name, category, price, date, icon, color)
+                })
+            }
         }
     }
+
+
 }
 
 @Composable
-fun MainListContent(subscription: List<Subscription>){
+fun MainListContent(subscriptions: List<Subscription>) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 20.dp)
-    ){
+    ) {
         Text(
             text = "ВАШИ ПОДПИСКИ",
             color = CreamWhite,
@@ -138,19 +125,20 @@ fun MainListContent(subscription: List<Subscription>){
         )
 
         Box(
-            modifier = Modifier.padding(top = 10.dp, bottom =16.dp)
+            modifier = Modifier
+                .padding(top = 10.dp, bottom = 16.dp)
                 .size(40.dp)
                 .background(Color.Black, CircleShape),
             contentAlignment = Alignment.Center
-        ){
+        ) {
             Icon(Icons.Default.MoreVert, contentDescription = null, tint = CreamWhite)
         }
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom =32.dp)
+            contentPadding = PaddingValues(bottom = 32.dp)
         ) {
-            items(subscription){ sub->
+            items(subscriptions) { sub ->
                 SubscriptionItem(sub)
             }
         }
