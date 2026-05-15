@@ -45,11 +45,9 @@ import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalStdlibApi::class)
 @Composable
-fun SettingScreen() {
-    var userName by remember { mutableStateOf("") }
-    val auth = FirebaseAuth.getInstance()
-    val userEmail = auth.currentUser?.email ?: "example@gmail.com"
-
+fun SettingScreen(
+    viewModel: SettingViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -83,8 +81,8 @@ fun SettingScreen() {
                 )
             }
             TextField(
-                value = userName,
-                onValueChange = { userName = it },
+                value = viewModel.userName,
+                onValueChange = { viewModel.onNameChange(it) },
                 label = {
                     Text(
                         "Имя",
@@ -118,7 +116,7 @@ fun SettingScreen() {
                 .padding(top = 20.dp),
         )
         Spacer(modifier = Modifier.height(20.dp))
-        SettingItem(icon = Icons.Default.Email, title = "Email", value = userEmail)
+        SettingItem(icon = Icons.Default.Email, title = "Email", value = viewModel.userEmail)
         SettingItem(icon = Icons.Default.Lock, title = "Пароль", value = "********")
         Text(
             text = "Дополнительное",
