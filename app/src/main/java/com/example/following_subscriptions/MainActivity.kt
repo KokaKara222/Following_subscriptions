@@ -12,8 +12,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.following_subscriptions.ui.theme.DeepBlue
 import com.example.following_subscriptions.ui.theme.Following_subscriptionsTheme
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,8 +34,11 @@ class MainActivity : ComponentActivity() {
                                 onRegistrationClick = {currentScreen = "main"},
                                 onBackToLogin = {currentScreen = "login"})
                         }
-                        "main" -> {
-                            MainListScreen()
+                        "main", "setting", "stats" -> {
+                            MainListScreen(
+                                startScreen = currentScreen,
+                                onNavigate ={ newScreen -> currentScreen = newScreen}
+                            )
                         }
                     }
                 }

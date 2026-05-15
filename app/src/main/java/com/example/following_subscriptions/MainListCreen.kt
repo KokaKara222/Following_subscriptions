@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.following_subscriptions.ui.theme.CreamWhite
@@ -42,107 +43,138 @@ data class Subscription(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainListScreen(){
+fun MainListScreen(
+    startScreen: String = "main", onNavigate: (String) -> Unit
+) {
     val subscriptions = remember { mutableStateListOf<Subscription>() }
+    var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true )
-    var showSheet by remember {mutableStateOf(false) }
-    var currentBottomTab by remember { mutableStateOf("subs") }
-    Scaffold(
-        containerColor = DeepBlue,
-        bottomBar = {
-            SubscriptionBottomBar(
-                currentScreen = currentBottomTab,
-                onTabClick = { newTab->
-                    currentBottomTab = newTab
-                }
-            )
-        },
-        floatingActionButton = {
+        skipPartiallyExpanded = true
+    )
+
+    Scaffold(containerColor = DeepBlue, bottomBar = {
+        SubscriptionBottomBar(
+            currentScreen = startScreen, onTabClick = { tab ->
+                val target = if (tab == "subs") "main" else tab
+                onNavigate(target)
+            })
+    }, floatingActionButton = {
+        if (startScreen == "main") {
             FloatingActionButton(
-                onClick = {showSheet=true},
-                containerColor= Color.Black,
+                onClick = { showSheet = true },
+                containerColor = Color.Black,
                 shape = CircleShape
-            ){
-                Icon(Icons.Default.Add, contentDescription = "Добавить", tint=CreamWhite)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Добавить", tint = CreamWhite)
             }
         }
-    ) { padding ->
-        Column(
+    }) { padding ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 20.dp)
         ) {
-            Text(
-                text = "ВАШИ ПОДПИСКИ",
-                color = CreamWhite,
-                fontSize = 40.sp,
-                fontFamily = LletreFont,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top=70.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
+            when (startScreen) {
+                "main" -> {
+                    MainListContent(subscriptions)
+                }
 
-            Box(
-                modifier = Modifier
-                    .padding(bottom =16.dp)
-                    .size(40.dp)
-                    .background(Color.Black, CircleShape),
-            ){
-                Icon(Icons.Default.MoreVert, contentDescription = null, tint = CreamWhite)
-            }
+                "setting" -> {
+                    SettingScreen(
+                        currentTab = startScreen,
+                        onTabClick = onNavigate
+                    )
+                }
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 80.dp)
-            ) {
-                items(subscriptions) { sub ->
-                    SubscriptionItem(sub)
+                "stats" -> {
+                    Text(
+                        "Статистика",
+                        fontSize = 30.sp,
+                        color = CreamWhite,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
                 }
             }
         }
+    }
 
-        if (showSheet){
-            ModalBottomSheet(
-                onDismissRequest = {showSheet = false},
-                containerColor = DeepBlue,
-                dragHandle = {BottomSheetDefaults.DragHandle(color = CreamWhite)},
-                sheetState = sheetState
-            ) {
-                AddSubscriptionCard(onAddClick = { name, category, price, date, icon, color ->
-                    subscriptions.add(
-                        Subscription(
-                            id = subscriptions.size,
-                            name = name,
-                            category = category,
-                            date = date,
-                            price = price,
-                            iconRes = icon,
-                            color = color
-                        )
+    if (showSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSheet = false },
+            containerColor = DeepBlue,
+            dragHandle = { BottomSheetDefaults.DragHandle(color = CreamWhite) },
+            sheetState = sheetState
+        ) {
+            AddSubscriptionCard(onAddClick = { name, category, price, date, icon, color ->
+                subscriptions.add(
+                    Subscription(
+                        id = subscriptions.size,
+                        name = name,
+                        category = category,
+                        date = date,
+                        price = price,
+                        iconRes = icon,
+                        color = color
                     )
-                    showSheet = false
-                })
-            }
+                )
+                showSheet = false
+            })
         }
     }
 }
 
 @Composable
-fun SubscriptionItem(sub: Subscription){
+fun MainListContent(subscription: List<Subscription>){
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 20.dp)
+    ){
+        Text(
+            text = "ВАШИ ПОДПИСКИ",
+            color = CreamWhite,
+            fontSize = 40.sp,
+            fontFamily = LletreFont,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 70.dp),
+            textAlign = TextAlign.Center
+        )
+
+        Box(
+            modifier = Modifier.padding(top = 10.dp, bottom =16.dp)
+                .size(40.dp)
+                .background(Color.Black, CircleShape),
+            contentAlignment = Alignment.Center
+        ){
+            Icon(Icons.Default.MoreVert, contentDescription = null, tint = CreamWhite)
+        }
+
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(bottom =32.dp)
+        ) {
+            items(subscription){ sub->
+                SubscriptionItem(sub)
+            }
+        }
+    }
+}
+
+
+@Composable
+fun SubscriptionItem(sub: Subscription) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = sub.color)
-    ){
+    ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
-        ){
+        ) {
             Image(
-                painter = painterResource( id = sub.iconRes),
+                painter = painterResource(id = sub.iconRes),
                 contentDescription = null,
                 modifier = Modifier
                     .size(56.dp)
@@ -151,22 +183,25 @@ fun SubscriptionItem(sub: Subscription){
             )
             Spacer(modifier = Modifier.width(16.dp))
 
-            Column(modifier = Modifier.weight(1f)){
-                Text(text = sub.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = sub.name,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
                 Text(text = sub.category, color = Color.White.copy(alpha = 0.7f), fontSize = 14.sp)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = sub.date, color = Color.White, fontSize = 14.sp)
             }
-            Column(horizontalAlignment = Alignment.End){
+            Column(horizontalAlignment = Alignment.End) {
                 Switch(
-                    checked = true,
-                    onCheckedChange = {},
-                    colors = SwitchDefaults.colors(
+                    checked = true, onCheckedChange = {}, colors = SwitchDefaults.colors(
                         checkedThumbColor = CreamWhite,
                         checkedTrackColor = Color.Black.copy(alpha = 0.3f)
                     )
                 )
-                Text(text="${sub.price} р/мес", color=Color.White, fontWeight = FontWeight.Bold)
+                Text(text = "${sub.price} р/мес", color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -174,13 +209,12 @@ fun SubscriptionItem(sub: Subscription){
 
 @Composable
 fun SubscriptionBottomBar(
-    currentScreen: String,
-    onTabClick: (String)-> Unit
-){
+    currentScreen: String, onTabClick: (String) -> Unit
+) {
     val tabs = listOf(
         Triple("stats", "Статистика", R.drawable.ic_stats),
         Triple("subs", "Подписка", R.drawable.ic_subs),
-        Triple("setting","Настройки", R.drawable.ic_settings)
+        Triple("setting", "Настройки", R.drawable.ic_settings)
     )
 
     Row(
@@ -190,8 +224,8 @@ fun SubscriptionBottomBar(
             .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
-    ){
-        tabs.forEach { (id, text, iconRes)->
+    ) {
+        tabs.forEach { (id, text, iconRes) ->
             val isActive = currentScreen == id
             val contentColor = if (isActive) CreamWhite else InactiveGray
 
@@ -199,22 +233,18 @@ fun SubscriptionBottomBar(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable{onTabClick(id)}
-                    .padding(8.dp)
-            ){
+                    .clickable { onTabClick(id) }
+                    .padding(8.dp)) {
                 Icon(
-                    painter = painterResource(id=iconRes),
+                    painter = painterResource(id = iconRes),
                     contentDescription = text,
                     tint = contentColor,
-                    modifier=Modifier.size(26.dp)
+                    modifier = Modifier.size(26.dp)
                 )
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = text,
-                    color = contentColor,
-                    fontSize = 12.sp,
-                    fontFamily = DuricFont
+                    text = text, color = contentColor, fontSize = 12.sp, fontFamily = DuricFont
                 )
             }
 
