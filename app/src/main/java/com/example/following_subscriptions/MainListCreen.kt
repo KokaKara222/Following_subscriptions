@@ -80,10 +80,7 @@ fun MainListScreen(
                 }
 
                 "setting" -> {
-                    SettingScreen(
-                        currentTab = startScreen,
-                        onTabClick = onNavigate
-                    )
+                    SettingScreen()
                 }
 
                 "stats" -> {
