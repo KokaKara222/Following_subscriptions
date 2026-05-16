@@ -33,13 +33,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.following_subscriptions.ui.theme.CreamWhite
+import com.example.following_subscriptions.ui.theme.DarkBlue
 import com.example.following_subscriptions.ui.theme.DeepBlue
 import com.example.following_subscriptions.ui.theme.DuricFont
 
 @OptIn(ExperimentalStdlibApi::class)
 @Composable
 fun AddSubscriptionCard(
-    onAddClick: (String, String, String, String, Int, String?, Color) -> Unit
+    onAddClick: (String, String, String, String, String, Int, String?, Color) -> Unit
 ) {
     val context = LocalContext.current
     var name by remember { mutableStateOf("") }
@@ -55,21 +56,23 @@ fun AddSubscriptionCard(
     var selectedIcon by remember { mutableStateOf(brandIcons[0]) }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
 
-    val colors = listOf(Color(0xFF2C3E50), Color(0xFF6497B1), Color(0xFF435D6B), Color(0xFF1B2735))
-    var selectedColor by remember { mutableStateOf(colors[0]) }
+    val cardcolors = listOf(Color(0xFF2C3E50), Color(0xFF6497B1), Color(0xFF435D6B), Color(0xFF1B2735))
+    var selectedColor by remember { mutableStateOf(cardcolors[0]) }
 
     val galleryLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             if (uri != null) {
-                context.contentResolver.takePersistableUriPermission(
-                    uri,
-                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
-                selectedUri = uri
-            } catch (e: Exception){
-            e.printStackTrace()
-            selectedUri = uri
-        }
+                try {
+                    context.contentResolver.takePersistableUriPermission(
+                        uri,
+                        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                    selectedUri = uri
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    selectedUri = uri
+                }
+            }
         }
     Column(
         modifier = Modifier
@@ -159,7 +162,7 @@ fun AddSubscriptionCard(
                 .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            colors.forEach { color ->
+            cardcolors.forEach { color ->
                 Box(
                     modifier = Modifier
                         .size(40.dp)
@@ -178,25 +181,30 @@ fun AddSubscriptionCard(
         )
         Spacer(modifier = Modifier.height(8.dp))
         SingleChoiceSegmentedButtonRow(
-            modifier = Modifier. fillMaxWidth()
+            modifier = Modifier.fillMaxWidth()
         ) {
             periods.forEachIndexed { index, label ->
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = periods.size),
-                    onClick = {selectedPeriodIndex = index},
+                    onClick = { selectedPeriodIndex = index },
                     selected = index == selectedPeriodIndex,
                     colors = SegmentedButtonDefaults.colors(
-
+                        selectedContainerColor = CreamWhite,
+                        selectedTextColor = DeepBlue,
+                        inactiveContainerColor = DarkBlue,
+                        inactiveTextColor = CreamWhite
                     )
-                ) { }
+                ) {
+                    Text(label, fontSize = 12.sp)
+                }
             }
         }
+        Spacer(modifier = Modifier.height(16.dp))
+
         CustomTextField(value = name, onValueChange = { name = it }, label = "Название")
         CustomTextField(value = category, onValueChange = { category = it }, label = "Категория")
         CustomTextField(
-            value = date,
-            onValueChange = { date = it },
-            label = "Дата (например: Май 30)"
+            value = date, onValueChange = { date = it }, label = "Дата (например: Май 30)"
         )
         CustomTextField(
             value = price,
@@ -205,11 +213,20 @@ fun AddSubscriptionCard(
             isNumeric = true
         )
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         Button(
             onClick = {
                 if (name.isNotBlank() && price.isNotBlank() && date.isNotBlank()) {
-                    onAddClick(name, category, price, date, selectedIcon, selectedColor)
+                    onAddClick(
+                        name,
+                        category,
+                        price,
+                        date,
+                        periods[selectedPeriodIndex],
+                        selectedIcon,
+                        selectedUri?.toString(),
+                        selectedColor
+                    )
                 }
             },
             modifier = Modifier
@@ -224,11 +241,6 @@ fun AddSubscriptionCard(
 }
 
 @Composable
-fun GetContent() {
-    TODO("Not yet implemented")
-}
-
-@Composable
 fun CustomTextField(
     value: String,
     onValueChange: (String) -> Unit,
@@ -237,7 +249,16 @@ fun CustomTextField(
 ) {
     TextField(
         value = value,
-        onValueChange = onValueChange,
+        onValueChange = { input ->
+            if (isNumeric) {
+                val filtered = input.filter { it.isDigit() || it == '.' || it == ',' }
+                if (filtered.count { it == '.' || it == ',' } <= 1) {
+                    onValueChange(filtered)
+                }
+            } else {
+                onValueChange(input)
+            }
+        },
         label = {
             Text(
                 label,

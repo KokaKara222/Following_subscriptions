@@ -10,6 +10,7 @@ data class Subscription(
     val category: String,
     val date: String,
     val price: String,
+    val period: String,
     val iconRes: Int,
     val imageUri: String?,
     val colorInt: Int

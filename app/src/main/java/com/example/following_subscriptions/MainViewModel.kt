@@ -21,13 +21,22 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     fun openSheet(){ showSheet= true}
     fun closeSheet(){ showSheet = false}
-    fun addSubscription(name: String, category: String, price: String, date: String, icon: Int, imageUri:String?, color:Color) {
+    fun addSubscription(
+        name: String,
+        category: String,
+        price: String,
+        date: String,
+        period: String,
+        icon: Int,
+        imageUri:String?,
+        color:Color) {
         viewModelScope.launch(Dispatchers.IO) {
             val newSub = Subscription(
                 name = name,
                 category = category,
                 date = date,
                 price = price,
+                period = period,
                 iconRes = icon,
                 imageUri = imageUri,
                 colorInt= color.toArgb()

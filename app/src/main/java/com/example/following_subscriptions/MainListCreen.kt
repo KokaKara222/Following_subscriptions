@@ -34,6 +34,7 @@ import com.example.following_subscriptions.ui.theme.LletreFont
 import androidx.compose.runtime.collectAsState
 import com.example.following_subscriptions.data.Subscription
 import androidx.compose.ui.graphics.toArgb
+import coil.compose.rememberAsyncImagePainter
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,20 +49,21 @@ fun MainListScreen(
     Scaffold(
         containerColor = DeepBlue,
         bottomBar = {
-        SubscriptionBottomBar(
-            currentScreen = startScreen, onTabClick = onNavigate)
-    },
+            SubscriptionBottomBar(
+                currentScreen = startScreen, onTabClick = onNavigate
+            )
+        },
         floatingActionButton = {
-        if (startScreen == "main") {
-            FloatingActionButton(
-                onClick = { viewModel.openSheet() },
-                containerColor = Color.Black,
-                shape = CircleShape
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Добавить", tint = CreamWhite)
+            if (startScreen == "main") {
+                FloatingActionButton(
+                    onClick = { viewModel.openSheet() },
+                    containerColor = Color.Black,
+                    shape = CircleShape
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Добавить", tint = CreamWhite)
+                }
             }
-        }
-    }) { padding ->
+        }) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -92,8 +94,17 @@ fun MainListScreen(
                 containerColor = DeepBlue,
                 sheetState = sheetState
             ) {
-                AddSubscriptionCard(onAddClick = { name, category, price, date, icon, color ->
-                    viewModel.addSubscription(name, category, price, date, icon, color)
+                AddSubscriptionCard(onAddClick = { name, category, price, date, period, icon, imageUri, color ->
+                    viewModel.addSubscription(
+                        name,
+                        category,
+                        price,
+                        date,
+                        period,
+                        icon,
+                        imageUri,
+                        color
+                    )
                 })
             }
         }
@@ -153,14 +164,25 @@ fun SubscriptionItem(sub: Subscription) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = sub.iconRes),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Crop
-            )
+            if (!sub.imageUri.isNullOrEmpty()) {
+                Image(
+                    painter = rememberAsyncImagePainter(sub.imageUri),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = sub.iconRes),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            }
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
@@ -170,7 +192,11 @@ fun SubscriptionItem(sub: Subscription) {
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
-                Text(text = sub.category, color = Color.White.copy(alpha = 0.7f), fontSize = 14.sp)
+                Text(
+                    text = sub.category,
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = sub.date, color = Color.White, fontSize = 14.sp)
             }
@@ -181,7 +207,11 @@ fun SubscriptionItem(sub: Subscription) {
                         checkedTrackColor = Color.Black.copy(alpha = 0.3f)
                     )
                 )
-                Text(text = "${sub.price} р/мес", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "${sub.price} р/${sub.period}",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
