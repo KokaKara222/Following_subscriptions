@@ -11,6 +11,7 @@ data class Subscription(
     val date: String,
     val price: String,
     val iconRes: Int,
+    val imageUri: String?,
     val colorInt: Int
 ) {
 }

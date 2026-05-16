@@ -21,7 +21,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     fun openSheet(){ showSheet= true}
     fun closeSheet(){ showSheet = false}
-    fun addSubscription(name: String, category: String, price: String, date: String, icon: Int, color:Color) {
+    fun addSubscription(name: String, category: String, price: String, date: String, icon: Int, imageUri:String?, color:Color) {
         viewModelScope.launch(Dispatchers.IO) {
             val newSub = Subscription(
                 name = name,
@@ -29,6 +29,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 date = date,
                 price = price,
                 iconRes = icon,
+                imageUri = imageUri,
                 colorInt= color.toArgb()
             )
             dao.insertSubscription(newSub)
