@@ -1,5 +1,9 @@
 package com.example.following_subscriptions
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.ui.draw.clip
@@ -7,9 +11,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.rememberAsyncImagePainter
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
@@ -18,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -29,110 +38,214 @@ import com.example.following_subscriptions.ui.theme.DuricFont
 
 @OptIn(ExperimentalStdlibApi::class)
 @Composable
-fun AddSubscriptionCard(onAddClick:(String,String,String, String, Int, Color)->Unit){
-    var name by remember{mutableStateOf("")}
-    var category by remember{mutableStateOf("")}
-    var price by remember{mutableStateOf("")}
+fun AddSubscriptionCard(
+    onAddClick: (String, String, String, String, Int, String?, Color) -> Unit
+) {
+    val context = LocalContext.current
+    var name by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("") }
+    var price by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("") }
 
-    val icons = listOf(R.drawable.netflix, R.drawable.youtube, R.drawable.spotify, R.drawable.iroke )
-    val colors = listOf(Color(0xFF2C3E50), Color(0xFF6497B1), Color(0xFF435D6B), Color(0xFF1B2735))
+    val periods = listOf("Месяц", "3 месяца", "Год")
+    var selectedPeriodIndex by remember { mutableStateOf(0) }
 
-    var selectedIcon by remember {mutableStateOf(icons[0])}
-    var selectedColor by remember {mutableStateOf(colors[0])}
+    val brandIcons =
+        listOf(R.drawable.netflix, R.drawable.youtube, R.drawable.spotify, R.drawable.iroke)
+    var selectedIcon by remember { mutableStateOf(brandIcons[0]) }
+    var selectedUri by remember { mutableStateOf<Uri?>(null) }
+
+    val colors = listOf(Color(0xFF2C3E50), Color(0xFF6497B1), Color(0xFF435D6B), Color(0xFF1B2735))
+    var selectedColor by remember { mutableStateOf(colors[0]) }
+
+    val galleryLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri != null) {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+                selectedUri = uri
+            } catch (e: Exception){
+            e.printStackTrace()
+            selectedUri = uri
+        }
+        }
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(DeepBlue)
-            .padding(24.dp),
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
-    ){
-        Text("Новая подписка", color = CreamWhite,
+    ) {
+        Text(
+            "Новая подписка", color = CreamWhite,
             fontSize = 24.sp,
             fontFamily = DuricFont
         )
         Spacer(modifier = Modifier.height(20.dp))
 
-        Text("Выберите логотип:", color = CreamWhite,
+        Text(
+            "Выберите логотип:", color = CreamWhite,
             modifier = Modifier.align(Alignment.Start),
-            fontSize = 14.sp)
+            fontSize = 14.sp
+        )
 
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(
-            modifier= Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ){
-            icons.forEach { icon ->
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.White.copy(alpha = 0.1f))
+                    .border(
+                        if (selectedUri != null) 3.dp else 0.dp,
+                        CreamWhite,
+                        RoundedCornerShape(8.dp)
+                    )
+                    .clickable { galleryLauncher.launch("image/*") },
+                contentAlignment = Alignment.Center
+
+            ) {
+                if (selectedUri != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(selectedUri),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(Icons.Default.Add, contentDescription = "Галерея", tint = CreamWhite)
+                }
+            }
+
+            brandIcons.forEach { icon ->
+                val isSelected = selectedIcon == icon && selectedUri == null
                 Image(
                     painter = painterResource(id = icon),
                     contentDescription = null,
                     modifier = Modifier
                         .size(50.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .border(if (selectedIcon == icon) 3.dp else 0.dp,
+                        .border(
+                            if (isSelected) 3.dp else 0.dp,
                             CreamWhite,
-                            RoundedCornerShape(8.dp))
-                        .clickable{selectedIcon = icon},
+                            RoundedCornerShape(8.dp)
+                        )
+                        .clickable {
+                            selectedIcon = icon
+                            selectedUri = null
+                        },
                     contentScale = ContentScale.Crop
                 )
             }
         }
 
-        Text("Выберите цвет:", color = CreamWhite,
+        Text(
+            "Выберите цвет:", color = CreamWhite,
             modifier = Modifier.align(Alignment.Start),
-            fontSize = 14.sp)
-       Row(
-           modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-           horizontalArrangement = Arrangement.spacedBy(12.dp)
-       ){
-           colors.forEach { color ->
-               Box(
-                   modifier = Modifier
-                       .size(40.dp)
-                       .clip(CircleShape)
-                       .background(color)
-                       .border(if (selectedColor == color) 3.dp else 0.dp, CreamWhite, CircleShape)
-                       .clickable{selectedColor = color}
-               )
-           }
-       }
-        Spacer (modifier = Modifier.height(10.dp))
+            fontSize = 14.sp
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            colors.forEach { color ->
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                        .border(if (selectedColor == color) 3.dp else 0.dp, CreamWhite, CircleShape)
+                        .clickable { selectedColor = color }
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            "Период оплаты:", color = CreamWhite,
+            modifier = Modifier.align(Alignment.Start),
+            fontSize = 14.sp
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        SingleChoiceSegmentedButtonRow(
+            modifier = Modifier. fillMaxWidth()
+        ) {
+            periods.forEachIndexed { index, label ->
+                SegmentedButton(
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = periods.size),
+                    onClick = {selectedPeriodIndex = index},
+                    selected = index == selectedPeriodIndex,
+                    colors = SegmentedButtonDefaults.colors(
 
+                    )
+                ) { }
+            }
+        }
         CustomTextField(value = name, onValueChange = { name = it }, label = "Название")
         CustomTextField(value = category, onValueChange = { category = it }, label = "Категория")
-        CustomTextField(value = date, onValueChange = { date = it }, label = "Дата (например: Май 30)")
-        CustomTextField(value = price, onValueChange = { price = it }, label = "Цена", isNumeric = true)
+        CustomTextField(
+            value = date,
+            onValueChange = { date = it },
+            label = "Дата (например: Май 30)"
+        )
+        CustomTextField(
+            value = price,
+            onValueChange = { price = it },
+            label = "Цена",
+            isNumeric = true
+        )
 
         Spacer(modifier = Modifier.height(30.dp))
         Button(
             onClick = {
-                if (name.isNotBlank() && price.isNotBlank() && date.isNotBlank()){
-                    onAddClick(name, category, price, date, selectedIcon,selectedColor)
+                if (name.isNotBlank() && price.isNotBlank() && date.isNotBlank()) {
+                    onAddClick(name, category, price, date, selectedIcon, selectedColor)
                 }
             },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = CreamWhite),
             shape = RoundedCornerShape(16.dp)
-        ){
+        ) {
             Text("Добавить", color = DeepBlue, fontFamily = DuricFont, fontSize = 18.sp)
         }
     }
 }
 
 @Composable
-fun CustomTextField (value: String, onValueChange: (String)-> Unit, label: String, isNumeric: Boolean=false){
+fun GetContent() {
+    TODO("Not yet implemented")
+}
+
+@Composable
+fun CustomTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    isNumeric: Boolean = false
+) {
     TextField(
         value = value,
         onValueChange = onValueChange,
         label = {
-            Text(label,
+            Text(
+                label,
                 color = CreamWhite.copy(alpha = 0.5f)
-            ) },
+            )
+        },
         textStyle = LocalTextStyle.current.copy(
-            color= CreamWhite,
+            color = CreamWhite,
             fontSize = 16.sp
         ),
         modifier = Modifier.fillMaxWidth(),
@@ -146,7 +259,7 @@ fun CustomTextField (value: String, onValueChange: (String)-> Unit, label: Strin
             focusedTextColor = CreamWhite,
             unfocusedTextColor = CreamWhite,
             focusedIndicatorColor = CreamWhite,
-            unfocusedIndicatorColor = CreamWhite.copy(alpha =  0.3f)
+            unfocusedIndicatorColor = CreamWhite.copy(alpha = 0.3f)
         )
     )
     Spacer(modifier = Modifier.height(8.dp))
