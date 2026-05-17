@@ -36,6 +36,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,7 +65,7 @@ fun MainListScreen(
     onNavigate: (String) -> Unit,
     viewModel: MainViewModel = viewModel()
 ) {
-    val subscriptions by viewModel.subscriptions.collectAsState(initial = emptyList())
+    val subscriptions by viewModel.subscriptions.observeAsState(initial = emptyList())
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     Scaffold(
         containerColor = DeepBlue,
@@ -99,12 +100,7 @@ fun MainListScreen(
                 }
 
                 "stats" -> {
-                    Text(
-                        "Статистика",
-                        fontSize = 30.sp,
-                        color = CreamWhite,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+                    StatsScreen(viewModel = viewModel)
                 }
             }
         }

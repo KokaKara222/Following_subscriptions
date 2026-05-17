@@ -26,6 +26,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
@@ -33,8 +35,10 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +52,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
+import java.util.Locale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
@@ -55,6 +60,9 @@ import com.example.following_subscriptions.ui.theme.CreamWhite
 import com.example.following_subscriptions.ui.theme.DarkBlue
 import com.example.following_subscriptions.ui.theme.DeepBlue
 import com.example.following_subscriptions.ui.theme.DuricFont
+import java.text.SimpleDateFormat
+import java.util.Date
+
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalStdlibApi::class)
 @Composable
@@ -66,6 +74,8 @@ fun AddSubscriptionCard(
     var category by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("") }
+
+    var showDatePicker by remember {mutableStateOf(false)}
 
     val periods = listOf("Месяц", "3 месяца", "Год")
     var selectedPeriodIndex by remember { mutableStateOf(0) }
@@ -93,6 +103,32 @@ fun AddSubscriptionCard(
                 }
             }
         }
+
+    if (showDatePicker){
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = {showDatePicker = false},
+            confirmButton = {
+                TextButton(onClick = {
+                    val selectedDateMillis = datePickerState.selectedDateMillis
+                    if (selectedDateMillis != null){
+                        val sdf = SimpleDateFormat("dd MMMM yyyy", Locale("ru"))
+                        date =sdf.format(Date(selectedDateMillis))
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK", color = CreamWhite)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {showDatePicker = false}) {
+                    Text("Отмена", color = CreamWhite)
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -222,9 +258,20 @@ fun AddSubscriptionCard(
 
         CustomTextField(value = name, onValueChange = { name = it }, label = "Название")
         CustomTextField(value = category, onValueChange = { category = it }, label = "Категория")
-        CustomTextField(
-            value = date, onValueChange = { date = it }, label = "Дата (например: Май 30)"
-        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable{showDatePicker = true}
+        ){
+            CustomTextField(
+                value =date,
+                onValueChange = {},
+                label = "Дата списания",
+                enabled = false
+            )
+        }
+
         CustomTextField(
             value = price,
             onValueChange = { price = it },
@@ -264,7 +311,8 @@ fun CustomTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    isNumeric: Boolean = false
+    isNumeric: Boolean = false,
+    enabled: Boolean = true
 ) {
     TextField(
         value = value,
@@ -284,6 +332,7 @@ fun CustomTextField(
                 color = CreamWhite.copy(alpha = 0.5f)
             )
         },
+        enabled = enabled,
         textStyle = LocalTextStyle.current.copy(
             color = CreamWhite,
             fontSize = 16.sp
@@ -296,6 +345,7 @@ fun CustomTextField(
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.Transparent,
             unfocusedContainerColor = Color.Transparent,
+            disabledContainerColor = Color.Transparent,
             focusedTextColor = CreamWhite,
             unfocusedTextColor = CreamWhite,
             focusedIndicatorColor = CreamWhite,

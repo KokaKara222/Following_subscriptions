@@ -12,12 +12,19 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.map
 
 class MainViewModel(application: Application): AndroidViewModel(application) {
     private val dao = AppDatabase.getDatabase(application).subscriptionDao()
-    val subscriptions = dao.getAllSubscriptions()
+    val subscriptions: LiveData<List<Subscription>> = dao.getAllSubscriptions()
     var showSheet by mutableStateOf(false)
         private set
+
+    val totalExpenses: Double
+        get()= subscriptions.value?.sumOf {sub ->
+        sub.price.replace(",", ".").toDoubleOrNull() ?: 0.0
+    } ?: 0.0
 
     fun openSheet(){ showSheet= true}
     fun closeSheet(){ showSheet = false}
@@ -48,8 +55,5 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             }
         }
     }
-
-
-
 }
 
