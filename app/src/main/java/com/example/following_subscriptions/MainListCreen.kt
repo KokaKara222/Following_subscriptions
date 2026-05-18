@@ -92,7 +92,7 @@ fun MainListScreen(
         ) {
             when (startScreen) {
                 "main" -> {
-                    MainListContent(subscriptions)
+                    MainListContent(subscriptions, viewModel)
                 }
 
                 "setting" -> {
@@ -130,7 +130,7 @@ fun MainListScreen(
 }
 
 @Composable
-fun MainListContent(subscriptions: List<Subscription>) {
+fun MainListContent(subscriptions: List<Subscription>, viewModel: MainViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -162,7 +162,7 @@ fun MainListContent(subscriptions: List<Subscription>) {
             contentPadding = PaddingValues(bottom = 32.dp)
         ) {
             items(subscriptions) { sub ->
-                SubscriptionItem(sub)
+                SubscriptionItem(sub, viewModel)
             }
         }
     }
@@ -170,7 +170,7 @@ fun MainListContent(subscriptions: List<Subscription>) {
 
 
 @Composable
-fun SubscriptionItem(sub: Subscription) {
+fun SubscriptionItem(sub: Subscription, viewModel: MainViewModel) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -218,9 +218,15 @@ fun SubscriptionItem(sub: Subscription) {
             }
             Column(horizontalAlignment = Alignment.End) {
                 Switch(
-                    checked = true, onCheckedChange = {}, colors = SwitchDefaults.colors(
+                    checked = sub.isActive,
+                    onCheckedChange = {isChecked ->
+                        viewModel.toggleSubscriptionActive(sub, isChecked)
+                    },
+                    colors = SwitchDefaults.colors(
                         checkedThumbColor = CreamWhite,
-                        checkedTrackColor = Color.Black.copy(alpha = 0.3f)
+                        checkedTrackColor = Color.Black.copy(alpha = 0.3f),
+                        uncheckedThumbColor = InactiveGray,
+                        uncheckedTrackColor = Color.Black.copy(alpha = 0.1f)
                     )
                 )
                 Text(
