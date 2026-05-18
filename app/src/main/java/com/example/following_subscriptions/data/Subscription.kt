@@ -13,6 +13,7 @@ data class Subscription(
     val period: String,
     val iconRes: Int,
     val imageUri: String?,
-    val colorInt: Int
+    val colorInt: Int,
+    val isActive: Boolean = true
 ) {
 }
