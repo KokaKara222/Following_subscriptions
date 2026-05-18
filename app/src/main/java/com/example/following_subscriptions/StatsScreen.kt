@@ -15,6 +15,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -28,9 +29,13 @@ import com.example.following_subscriptions.ui.theme.DuricFont
 
 @Composable
 fun StatsScreen (viewModel: MainViewModel){
-    val subscriptionsState = viewModel.subscriptions.observeAsState(emptyList())
-    val subscriptionsCount = subscriptionsState.value.size
+
+    val subscriptions by viewModel.subscriptions.observeAsState(emptyList())
     val totalAmount = viewModel.totalExpenses
+
+    val activeSubs = subscriptions.filter { it.isActive }
+    val subscriptionsCount = activeSubs.size
+
 
     Column(
         modifier = Modifier
