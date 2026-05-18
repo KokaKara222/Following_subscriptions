@@ -21,11 +21,38 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     var showSheet by mutableStateOf(false)
         private set
 
-    val totalExpenses: Double
-        get()= subscriptions.value?.sumOf {sub ->
-        sub.price.replace(",", ".").toDoubleOrNull() ?: 0.0
-    } ?: 0.0
+    val totalExpenses: LiveData<Double> = subscriptions.map{ list ->
+        list.filter{it.isActive}.sumOf {sub->
+            calculateMonthlyPrice(sub.price, sub.period)
+        }
+    }
 
+    private fun calculateMonthlyPrice(priceStr: String, period: String): Double {
+        val price = priceStr.replace(",", ".").toDoubleOrNull() ?: 0.0
+        return when (period.lowercase().trim()) {
+            "3 месяца" -> price / 3.0
+            "год", "1 год" -> price / 12.0
+            else -> price
+        }
+    }
+
+    fun toggleSubscriptionActive(subscription: Subscription, isActive: Boolean){
+        viewModelScope.launch(Dispatchers.IO) {
+            val updatedSub = Subscription(
+                id = subscription.id,
+                name = subscription.name,
+                category = subscription.category,
+                date = subscription.date,
+                price = subscription.price,
+                period = subscription.period,
+                iconRes = subscription.iconRes,
+                imageUri = subscription.imageUri,
+                colorInt = subscription.colorInt,
+                isActive = isActive
+            )
+            dao.updateSubscription(updatedSub)
+        }
+    }
     fun openSheet(){ showSheet= true}
     fun closeSheet(){ showSheet = false}
     fun addSubscription(
@@ -46,7 +73,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 period = period,
                 iconRes = icon,
                 imageUri = imageUri,
-                colorInt= color.toArgb()
+                colorInt= color.toArgb(),
+                isActive = true
             )
             dao.insertSubscription(newSub)
 
