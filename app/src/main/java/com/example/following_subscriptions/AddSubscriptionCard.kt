@@ -56,6 +56,7 @@ import java.util.Locale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import com.example.following_subscriptions.data.Subscription
 import com.example.following_subscriptions.ui.theme.CreamWhite
 import com.example.following_subscriptions.ui.theme.DarkBlue
 import com.example.following_subscriptions.ui.theme.DeepBlue
@@ -67,26 +68,36 @@ import java.util.Date
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalStdlibApi::class)
 @Composable
 fun AddSubscriptionCard(
+    subscriptionToEdit: Subscription?= null,
     onAddClick: (String, String, String, String, String, Int, String?, Color) -> Unit
 ) {
     val context = LocalContext.current
-    var name by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("") }
-    var price by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(subscriptionToEdit?.name?:"") }
+    var category by remember { mutableStateOf(subscriptionToEdit?.category?:"") }
+    var price by remember { mutableStateOf(subscriptionToEdit?.price?:"") }
+    var date by remember { mutableStateOf(subscriptionToEdit?.date?:"") }
 
     var showDatePicker by remember {mutableStateOf(false)}
 
     val periods = listOf("Месяц", "3 месяца", "Год")
-    var selectedPeriodIndex by remember { mutableStateOf(0) }
+
+    var selectedPeriodIndex by remember {
+        mutableStateOf(
+            subscriptionToEdit?.period?.let{savePeriod ->
+                periods.indexOfFirst { it.equals(savePeriod, ignoreCase = true) }.takeIf { it != -1 }?: 0
+            } ?:0
+        )
+    }
 
     val brandIcons =
         listOf(R.drawable.netflix, R.drawable.youtube, R.drawable.spotify, R.drawable.iroke)
-    var selectedIcon by remember { mutableStateOf(brandIcons[0]) }
-    var selectedUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedIcon by remember { mutableStateOf(subscriptionToEdit?.iconRes?: brandIcons[0]) }
+    var selectedUri by remember {
+        mutableStateOf<Uri?>(subscriptionToEdit?.imageUri?.let{Uri.parse(it) })}
 
     val cardcolors = listOf(Color(0xFF2C3E50), Color(0xFF6497B1), Color(0xFF435D6B), Color(0xFF1B2735))
-    var selectedColor by remember { mutableStateOf(cardcolors[0]) }
+
+    var selectedColor by remember { mutableStateOf(subscriptionToEdit?.colorInt?.let{Color(it)} ?: cardcolors[0]) }
 
     val galleryLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -138,7 +149,8 @@ fun AddSubscriptionCard(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            "Новая подписка", color = CreamWhite,
+            text = if (subscriptionToEdit != null)"Редактирование" else "Новая подписка",
+            color = CreamWhite,
             fontSize = 24.sp,
             fontFamily = DuricFont
         )
@@ -262,7 +274,7 @@ fun AddSubscriptionCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable{showDatePicker = true}
+                .clickable { showDatePicker = true }
         ){
             CustomTextField(
                 value =date,
@@ -301,7 +313,11 @@ fun AddSubscriptionCard(
             colors = ButtonDefaults.buttonColors(containerColor = CreamWhite),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Text("Добавить", color = DeepBlue, fontFamily = DuricFont, fontSize = 18.sp)
+            Text(
+                text =if(subscriptionToEdit != null)"Сохранить изменения" else "Добавить",
+                color = DeepBlue,
+                fontFamily = DuricFont,
+                fontSize = 18.sp)
         }
     }
 }

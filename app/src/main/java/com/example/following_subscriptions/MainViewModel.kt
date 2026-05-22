@@ -21,6 +21,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     var showSheet by mutableStateOf(false)
         private set
 
+    var editingSubscription by mutableStateOf<Subscription?>(null)
+    private set
     val totalExpenses: LiveData<Double> = subscriptions.map{ list ->
         list.filter{it.isActive}.sumOf {sub->
             calculateMonthlyPrice(sub.price, sub.period)
@@ -53,9 +55,12 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             dao.updateSubscription(updatedSub)
         }
     }
-    fun openSheet(){ showSheet= true}
+    fun openSheet(){
+        editingSubscription = null
+        showSheet= true}
     fun closeSheet(){ showSheet = false}
-    fun addSubscription(
+
+    fun saveSubscription(
         name: String,
         category: String,
         price: String,
@@ -63,25 +68,49 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         period: String,
         icon: Int,
         imageUri:String?,
-        color:Color) {
+        color:Color
+    ) {
         viewModelScope.launch(Dispatchers.IO) {
-            val newSub = Subscription(
-                name = name,
-                category = category,
-                date = date,
-                price = price,
-                period = period,
-                iconRes = icon,
-                imageUri = imageUri,
-                colorInt= color.toArgb(),
-                isActive = true
-            )
-            dao.insertSubscription(newSub)
+            val currentEdit = editingSubscription
+            if (currentEdit != null) {
+                val updateSub = currentEdit.copy(
+                    name = name,
+                    category = category,
+                    date = date,
+                    price = price,
+                    period = period,
+                    iconRes = icon,
+                    imageUri = imageUri,
+                    colorInt = color.toArgb(),
+                )
+                dao.insertSubscription(updateSub)
+            } else{
+                val newSub = Subscription(
+                    name = name,
+                    category = category,
+                    date = date,
+                    price = price,
+                    period = period,
+                    iconRes = icon,
+                    imageUri = imageUri,
+                    colorInt= color.toArgb(),
+                    isActive = true
+                )
+                dao.insertSubscription(newSub)
+            }
 
             launch(Dispatchers.Main){
                 closeSheet()
             }
         }
     }
+
+    fun deleteSubscription(subscription: Subscription){
+        viewModelScope.launch(Dispatchers.IO){
+            dao.deleteSubscription(subscription)
+        }
+    }
+
+
 }
 
