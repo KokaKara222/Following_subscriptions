@@ -1,5 +1,12 @@
 package com.example.following_subscriptions
 
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.compose.ui.graphics.Color
@@ -40,19 +47,14 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     fun toggleSubscriptionActive(subscription: Subscription, isActive: Boolean){
         viewModelScope.launch(Dispatchers.IO) {
-            val updatedSub = Subscription(
-                id = subscription.id,
-                name = subscription.name,
-                category = subscription.category,
-                date = subscription.date,
-                price = subscription.price,
-                period = subscription.period,
-                iconRes = subscription.iconRes,
-                imageUri = subscription.imageUri,
-                colorInt = subscription.colorInt,
-                isActive = isActive
-            )
+            val updatedSub = subscription.copy(isActive = isActive)
             dao.updateSubscription(updatedSub)
+
+            if(isActive){
+                scheduleNotification(updatedSub)
+            }else{
+                cancelNotification(subscription.id)
+            }
         }
     }
     fun openSheet(){
@@ -91,7 +93,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                     imageUri = imageUri,
                     colorInt = color.toArgb(),
                 )
-                dao.insertSubscription(updateSub)
+                dao.updateSubscription(updateSub)
+
+                cancelNotification(updateSub.id)
+                scheduleNotification(updateSub)
             } else{
                 val newSub = Subscription(
                     name = name,
@@ -104,9 +109,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                     colorInt= color.toArgb(),
                     isActive = true
                 )
-                dao.insertSubscription(newSub)
+                val newId = dao.insertSubscription(newSub)
+                val subWithId = newSub.copy(id = newId)
+                scheduleNotification(subWithId)
             }
-
             launch(Dispatchers.Main){
                 closeSheet()
             }
@@ -116,9 +122,47 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun deleteSubscription(subscription: Subscription){
         viewModelScope.launch(Dispatchers.IO){
             dao.deleteSubscription(subscription)
+            cancelNotification(subscription.id)
         }
     }
 
 
+    private fun scheduleNotification(subscription: Subscription){
+        if (!subscription.isActive) return
+        try{
+            val context = getApplication<Application>().applicationContext
+            val sdf = SimpleDateFormat("dd MM yyyy", Locale("ru"))
+            val subDate = sdf.parse(subscription.date) ?: return
+
+            val calendar = Calendar.getInstance().apply {
+                time = subDate
+                add(Calendar.DAY_OF_YEAR, -1)
+                set(Calendar.HOUR_OF_DAY,12)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+            }
+            val delay = calendar.timeInMillis - System.currentTimeMillis()
+
+            if (delay > 0){
+                val data = workDataOf(
+                        "SUB_NAME" to subscription.name,
+                        "SUB_PRICE" to subscription.price
+                )
+                val workRequest = OneTimeWorkRequestBuilder<NotificationWorker>()
+                    .setInputData(data)
+                    .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                    .addTag("sub_${subscription.id}")
+                    .build()
+                WorkManager.getInstance(context).enqueue(workRequest)
+            }
+        } catch(e: Exception){
+            e.printStackTrace()
+        }
+    }
+
+    private fun cancelNotification(subscriptionId: Long){
+        val context = getApplication<Application>().applicationContext
+        WorkManager.getInstance(context).cancelAllWorkByTag("sub_$subscriptionId")
+    }
 }
 

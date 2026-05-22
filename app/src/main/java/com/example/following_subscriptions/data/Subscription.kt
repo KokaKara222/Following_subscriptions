@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "subscriptions")
 data class Subscription(
     @PrimaryKey(autoGenerate = true)
-    val id: Int=0,
+    val id: Long=0,
     val name: String,
     val category: String,
     val date: String,

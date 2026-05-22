@@ -19,7 +19,7 @@ interface SubscriptionDao{
     fun getAllSubscriptionsFlow(): Flow<List<Subscription>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSubscription(subscription: Subscription)
+    suspend fun insertSubscription(subscription: Subscription): Long
 
     @Update
     suspend fun updateSubscription(subscription: Subscription)
