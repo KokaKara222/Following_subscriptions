@@ -22,7 +22,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         private set
 
     var editingSubscription by mutableStateOf<Subscription?>(null)
-    private set
+        private set
     val totalExpenses: LiveData<Double> = subscriptions.map{ list ->
         list.filter{it.isActive}.sumOf {sub->
             calculateMonthlyPrice(sub.price, sub.period)
@@ -58,7 +58,15 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun openSheet(){
         editingSubscription = null
         showSheet= true}
-    fun closeSheet(){ showSheet = false}
+
+    fun openSheetForEdit(subscription: Subscription){
+        editingSubscription =subscription
+        showSheet =true
+    }
+    fun closeSheet(){
+        showSheet = false
+        editingSubscription = null
+    }
 
     fun saveSubscription(
         name: String,

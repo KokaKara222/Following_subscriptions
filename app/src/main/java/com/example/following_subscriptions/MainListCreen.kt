@@ -21,12 +21,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -110,8 +112,10 @@ fun MainListScreen(
                 containerColor = DeepBlue,
                 sheetState = sheetState
             ) {
-                AddSubscriptionCard(onAddClick = { name, category, price, date, period, icon, imageUri, color ->
-                    viewModel.addSubscription(
+                AddSubscriptionCard(
+                    subscriptionToEdit = viewModel.editingSubscription,
+                    onAddClick = { name, category, price, date, period, icon, imageUri, color ->
+                    viewModel.saveSubscription(
                         name,
                         category,
                         price,
@@ -172,7 +176,9 @@ fun MainListContent(subscriptions: List<Subscription>, viewModel: MainViewModel)
 @Composable
 fun SubscriptionItem(sub: Subscription, viewModel: MainViewModel) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { viewModel.openSheetForEdit(sub) },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color(sub.colorInt))
     ) {
@@ -217,18 +223,28 @@ fun SubscriptionItem(sub: Subscription, viewModel: MainViewModel) {
                 Text(text = sub.date, color = Color.White, fontSize = 14.sp)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Switch(
-                    checked = sub.isActive,
-                    onCheckedChange = {isChecked ->
-                        viewModel.toggleSubscriptionActive(sub, isChecked)
-                    },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = CreamWhite,
-                        checkedTrackColor = Color.Black.copy(alpha = 0.3f),
-                        uncheckedThumbColor = InactiveGray,
-                        uncheckedTrackColor = Color.Black.copy(alpha = 0.1f)
+                Row(verticalAlignment = Alignment.CenterVertically){
+                    IconButton(onClick = {viewModel.deleteSubscription(sub) }) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Удалить",
+                            tint = Color.White.copy(alpha = 0.8f)
+                        )
+                    }
+                    Switch(
+                        checked = sub.isActive,
+                        onCheckedChange = {isChecked ->
+                            viewModel.toggleSubscriptionActive(sub, isChecked)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = CreamWhite,
+                            checkedTrackColor = Color.Black.copy(alpha = 0.3f),
+                            uncheckedThumbColor = InactiveGray,
+                            uncheckedTrackColor = Color.Black.copy(alpha = 0.1f)
+                        )
                     )
-                )
+                }
+
                 Text(
                     text = "${sub.price} р/${sub.period}",
                     color = Color.White,
