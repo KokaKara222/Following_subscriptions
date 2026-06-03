@@ -13,9 +13,6 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface SubscriptionDao{
     @Query("SELECT * FROM subscriptions")
-    fun getAllSubscriptions(): LiveData<List<Subscription>>
-
-    @Query("SELECT * FROM subscriptions")
     fun getAllSubscriptionsFlow(): Flow<List<Subscription>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
